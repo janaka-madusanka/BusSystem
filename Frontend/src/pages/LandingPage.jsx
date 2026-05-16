@@ -53,7 +53,7 @@ function LandingPage() {
           
           {/* Enter Website */}
           <Link
-            to="/home"
+            to="/login"
             className="group inline-flex items-center gap-2 rounded-full bg-white px-7 py-4 text-sm font-semibold text-emerald-900 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105"
           >
             Enter Website
@@ -62,7 +62,7 @@ function LandingPage() {
 
           {/* About */}
           <Link
-            to="/about"
+            to="/login"
             className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/5 px-6 py-4 text-sm font-medium text-white backdrop-blur-md transition-all duration-300 hover:bg-white/10"
           >
             <Info className="h-4 w-4" />
