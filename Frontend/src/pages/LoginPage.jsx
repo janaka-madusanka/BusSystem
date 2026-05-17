@@ -11,33 +11,47 @@ function LoginPage() {
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      // ✅ USE AUTH SERVICE
-      const data = await authService.login({
-        email,
-        password,
-      });
+  try {
+    const data = await authService.login({
+      email,
+      password,
+    });
 
-      console.log(data);
+    console.log(data);
 
-      // ✅ SAVE TOKEN
-      localStorage.setItem("token", data.token);
+    // Save token
+    localStorage.setItem("token", data.token);
 
-      // optional: save user
-      localStorage.setItem("user", JSON.stringify(data.user));
+    // Save user
+    localStorage.setItem(
+      "user",
+      JSON.stringify(data.user)
+    );
 
-      alert("Login Success");
+    alert("Login Success");
 
+    // Redirect based on role
+    if (data.user.role === "admin") {
+      navigate("/admin");
+
+    } else if (data.user.role === "conductor") {
+      navigate("/conductor");
+
+    } else {
       navigate("/home");
-    } catch (error) {
-      console.log(error);
-      alert(
-        error?.response?.data?.message || "Login Failed"
-      );
     }
-  };
+
+  } catch (error) {
+    console.log(error);
+
+    alert(
+      error?.response?.data?.message ||
+      "Login Failed"
+    );
+  }
+};
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">

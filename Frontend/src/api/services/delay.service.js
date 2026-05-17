@@ -27,6 +27,14 @@ const delayService = {
     const response = await api.put(`/delays/${id}/resolve`);
     return response.data;
   },
+
+  
+  getMyDelays: async () => {
+    const response = await api.get("/delays/my");
+    return response.data;
+  },
+
+
 };
 
 export default delayService;
