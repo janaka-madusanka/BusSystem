@@ -5,6 +5,7 @@ import StatCard from "../Admin/components/StatCard.jsx";
 import authService from "../../api/services/auth.service.js";
 import delayService from "../../api/services/delay.service.js";
 import routeService from "../../api/services/route.service.js";
+import timetableService from "../../api/services/timetable.service.js";
 
 export default function ConductorHome() {
   const [loading, setLoading] = useState(true);
@@ -15,59 +16,74 @@ export default function ConductorHome() {
     route: null,
   });
 
+  const [timetable, setTimetable] = useState(null);
+
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
-  try {
-    setLoading(true);
-
-    console.log("🚀 Loading dashboard...");
-
-    // 👤 USER
-    const userRes = await authService.getMe();
-    const user = userRes?.data?.data || userRes?.data;
-
-    console.log("👤 USER:", user);
-
-    // 🚨 DELAYS
-    const delayRes = await delayService.getMyDelays();
-    const delays = delayRes?.data?.data || delayRes?.data || [];
-
-    console.log("🚨 DELAYS:", delays);
-
-    // 🛣 ROUTE
-    let route = null;
-
     try {
-      const routeRes = await routeService.getMyRoute();
-      route = routeRes?.data?.data || routeRes?.data;
+      setLoading(true);
 
-      console.log("🛣 MY ROUTE:", route);
+      console.log("🚀 Loading dashboard...");
+
+      // 👤 USER
+     
+      const userRes = await authService.getMe();
+      const user =
+  userRes?.data?.data ||
+  userRes?.data?.user ||
+  userRes?.data ||
+  null;
+      console.log("FULL USER RESPONSE:", userRes);;
+
+      // 🚨 DELAYS
+      const delayRes = await delayService.getMyDelays();
+      const delays = delayRes?.data?.data || delayRes?.data || [];
+
+      console.log("🚨 DELAYS:", delays);
+
+      // 🛣 ROUTE
+      let route = null;
+
+      try {
+        const routeRes = await routeService.getMyRoute();
+        route = routeRes?.data?.data || routeRes?.data;
+        console.log("🛣 MY ROUTE:", route);
+      } catch (err) {
+        console.log("⚠️ No assigned route found");
+      }
+
+      // 📅 TIMETABLE (NEW)
+      let timetableData = null;
+
+      try {
+        const timetableRes = await timetableService.getMyBusTimetable();
+        timetableData =
+          timetableRes?.data?.data || timetableRes?.data || null;
+
+        console.log("📅 TIMETABLE:", timetableData);
+      } catch (err) {
+        console.log("⚠️ No timetable found");
+      }
+
+      setStats({
+        user,
+        delays,
+        route,
+      });
+
+      setTimetable(timetableData);
     } catch (err) {
-      console.log("⚠️ No assigned route found");
+      console.error("❌ Dashboard load error:", err);
+    } finally {
+      setLoading(false);
     }
-
-    setStats({
-      user,
-      delays,
-      route,
-    });
-
-  } catch (err) {
-    console.error("❌ Dashboard load error:", err);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   if (loading) {
-    return (
-      <div className="text-gray-400">
-        Loading conductor dashboard...
-      </div>
-    );
+    return <div className="text-gray-400">Loading conductor dashboard...</div>;
   }
 
   return (
@@ -83,7 +99,8 @@ export default function ConductorHome() {
         </h1>
 
         <p className="text-sm text-slate-400 mt-1">
-          Email: {stats.user?.email || "N/A"} • Role: {stats.user?.role || "N/A"}
+          Email: {stats.user?.email || "N/A"} • Role:{" "}
+          {stats.user?.role || "N/A"}
         </p>
       </div>
 
@@ -136,15 +153,55 @@ export default function ConductorHome() {
           </p>
 
           <p className="text-gray-300">
-  <strong>Stops:</strong>{" "}
-  {stats.route.stops?.length > 0
-    ? stats.route.stops
-        .map((stop) => stop.name)
-        .join(" → ")
-    : "No stops"}
-</p>
+            <strong>Stops:</strong>{" "}
+            {stats.route.stops?.length > 0
+              ? stats.route.stops.map((stop) => stop.name).join(" → ")
+              : "No stops"}
+          </p>
         </div>
       )}
+
+      {/* 🟢 TIMETABLE SECTION (NEW) */}
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold text-white mb-4">
+          My Timetable
+        </h2>
+
+        {!timetable ? (
+          <p className="text-gray-400">No timetable found.</p>
+        ) : (
+          <div className="space-y-3">
+            <div className="p-4 rounded-xl bg-slate-800 border border-slate-700">
+              <p className="text-sm text-gray-300 mb-2">
+                Date: {timetable.date || "N/A"}
+              </p>
+
+              <div className="space-y-3">
+                {timetable.trips?.map((trip, index) => (
+                  <div
+                    key={index}
+                    className="p-3 rounded-lg bg-slate-900 border border-slate-700"
+                  >
+                    <div className="flex justify-between">
+                      <p className="text-white font-semibold">
+                        Trip {trip.tripNumber}
+                      </p>
+
+                      <span className="text-xs px-2 py-1 rounded bg-blue-500/20 text-blue-300">
+                        {trip.status}
+                      </span>
+                    </div>
+
+                    <p className="text-sm text-gray-300 mt-1">
+                      🕒 {trip.departureTime} → {trip.arrivalTime}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* DELAYS */}
       <div className="mt-8">
