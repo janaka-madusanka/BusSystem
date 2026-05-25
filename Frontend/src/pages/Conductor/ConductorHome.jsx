@@ -3,6 +3,7 @@ import { Bus, MapPin, AlertTriangle, Clock } from "lucide-react";
 
 import StatCard from "../Admin/components/StatCard.jsx";
 import authService from "../../api/services/auth.service.js";
+import busService from "../../api/services/bus.service.js";
 import delayService from "../../api/services/delay.service.js";
 import routeService from "../../api/services/route.service.js";
 import timetableService from "../../api/services/timetable.service.js";
@@ -12,6 +13,7 @@ export default function ConductorHome() {
 
   const [stats, setStats] = useState({
     user: null,
+    bus: null,
     delays: [],
     route: null,
   });
@@ -37,6 +39,16 @@ export default function ConductorHome() {
   userRes?.data ||
   null;
       console.log("FULL USER RESPONSE:", userRes);;
+
+      let bus = null;
+
+      try {
+        const busRes = await busService.getMyBus();
+        bus = busRes?.data || null;
+        console.log("MY ASSIGNED BUS:", bus);
+      } catch (err) {
+        console.log("No assigned bus found");
+      }
 
       // 🚨 DELAYS
       const delayRes = await delayService.getMyDelays();
@@ -70,6 +82,7 @@ export default function ConductorHome() {
 
       setStats({
         user,
+        bus,
         delays,
         route,
       });
@@ -109,7 +122,11 @@ export default function ConductorHome() {
         <StatCard
           icon={Bus}
           label="Assigned Bus"
-          value={stats.user?.assignedBus?.busNumber || "Not Assigned"}
+          value={
+            stats.bus?.busNumber ||
+            stats.user?.assignedBus?.busNumber ||
+            "Not Assigned"
+          }
         />
 
         <StatCard

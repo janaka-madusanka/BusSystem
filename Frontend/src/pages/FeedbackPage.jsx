@@ -25,6 +25,19 @@ function FeedbackPage() {
   useEffect(() => {
     const fetchBuses = async () => {
       try {
+        const user = JSON.parse(localStorage.getItem("user") || "null");
+
+        if (user?.role === "conductor") {
+          const res = await busService.getMyBus();
+          setBuses(res.data ? [res.data] : []);
+
+          if (res.data?._id) {
+            setForm((prev) => ({ ...prev, bus: res.data._id }));
+          }
+
+          return;
+        }
+
         const res = await busService.getAllBuses();
         setBuses(res.data || []);
       } catch (err) {

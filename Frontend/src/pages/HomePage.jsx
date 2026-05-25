@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   CalendarDays,
   Clock,
@@ -12,11 +12,27 @@ import SiteNav from "../components/Navbar";
 import SiteFooter from "../components/Footer";
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const [type, setType] = useState("All");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+
+  const formatDateForApi = (value) => {
+    if (!value) return "";
+
+    const [year, month, day] = value.split("-");
+    return `${day}/${month}/${year}`;
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
-    window.location.href = "/timetable";
+
+    const params = new URLSearchParams();
+    if (date) params.set("date", formatDateForApi(date));
+    if (time) params.set("time", time);
+    if (type !== "All") params.set("busType", type);
+
+    navigate(`/timetable${params.toString() ? `?${params.toString()}` : ""}`);
   };
 
   return (
@@ -50,7 +66,12 @@ export default function HomePage() {
                 <span className="flex items-center gap-2 text-xs text-gray-500">
                   <CalendarDays size={14} /> Date
                 </span>
-                <input type="date" className="mt-1 w-full outline-none" />
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="mt-1 w-full outline-none"
+                />
               </label>
 
               {/* Time */}
@@ -58,7 +79,12 @@ export default function HomePage() {
                 <span className="flex items-center gap-2 text-xs text-gray-500">
                   <Clock size={14} /> Time
                 </span>
-                <input type="time" className="mt-1 w-full outline-none" />
+                <input
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  className="mt-1 w-full outline-none"
+                />
               </label>
 
               {/* Button */}
@@ -87,7 +113,7 @@ export default function HomePage() {
           </div>
 
           {/* ALERT BAR */}
-          <Link to="/live-delay" className="block bg-green-500 text-white">
+          <Link to="/live-delays" className="block bg-green-500 text-white">
             <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3 text-sm">
               <AlertTriangle size={16} />
               <span>

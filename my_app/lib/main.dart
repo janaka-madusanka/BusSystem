@@ -246,7 +246,7 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      BusListScreen(api: widget.api),
+      BusListScreen(api: widget.api, user: widget.user),
       SettingsScreen(user: widget.user),
     ];
 
@@ -273,9 +273,10 @@ class _MainShellState extends State<MainShell> {
 }
 
 class BusListScreen extends StatefulWidget {
-  const BusListScreen({super.key, required this.api});
+  const BusListScreen({super.key, required this.api, required this.user});
 
   final ApiClient api;
+  final Map<String, dynamic> user;
 
   @override
   State<BusListScreen> createState() => _BusListScreenState();
@@ -299,6 +300,13 @@ class _BusListScreenState extends State<BusListScreen> {
     });
 
     try {
+      if (widget.user['role'] == 'conductor') {
+        final response = await widget.api.get('/buses/my-bus');
+        final bus = response['data'];
+        setState(() => buses = bus == null ? [] : [bus]);
+        return;
+      }
+
       final response = await widget.api.get('/buses');
       setState(() => buses = response['data'] as List<dynamic>);
     } catch (e) {
@@ -311,7 +319,11 @@ class _BusListScreenState extends State<BusListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Bus List')),
+      appBar: AppBar(
+        title: Text(
+          widget.user['role'] == 'conductor' ? 'My Assigned Bus' : 'Bus List',
+        ),
+      ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(

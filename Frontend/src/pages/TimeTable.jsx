@@ -1,10 +1,13 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 import {
   Download,
   Printer,
   ArrowLeft,
+  CalendarDays,
+  Clock,
+  Search,
 } from "lucide-react";
 
 import SiteNav from "../components/Navbar";
@@ -14,30 +17,60 @@ import SiteFooter from "../components/Footer";
 import timetableService from "../api/services/timetable.service.js";
 
 export default function TimetablePage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [timetables, setTimetables] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const [busType, setBusType] = useState("All");
+  const [date, setDate] = useState(searchParams.get("date") || "");
+  const [time, setTime] = useState(searchParams.get("time") || "");
+  const [busType, setBusType] = useState(searchParams.get("busType") || "All");
 
-  // Today's date in DD/MM/YYYY
-  const today = new Date().toLocaleDateString(
-    "en-GB"
-  );
+  const toInputDate = (value) => {
+    if (!value) return "";
+
+    const [day, month, year] = value.split("/");
+    if (!day || !month || !year) return "";
+
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  };
+
+  const toApiDate = (value) => {
+    if (!value) return "";
+
+    const [year, month, day] = value.split("-");
+    return `${day}/${month}/${year}`;
+  };
 
   useEffect(() => {
-    fetchTimetable();
-  }, [busType]);
+    const nextDate = searchParams.get("date") || "";
+    const nextTime = searchParams.get("time") || "";
+    const nextBusType = searchParams.get("busType") || "All";
 
-  const fetchTimetable = async () => {
+    setDate(nextDate);
+    setTime(nextTime);
+    setBusType(nextBusType);
+    fetchTimetable({
+      date: nextDate,
+      time: nextTime,
+      busType: nextBusType,
+    });
+  }, [searchParams]);
+
+  const fetchTimetable = async (filters) => {
   try {
     setLoading(true);
+    setError("");
+
+    const params = {};
+    if (filters.date) params.date = filters.date;
+    if (filters.time) params.time = filters.time;
+    if (filters.busType && filters.busType !== "All") {
+      params.busType = filters.busType;
+    }
 
     const response =
-      await timetableService.getTimetable({
-        busType,
-      });
-
-    console.log(response.data);
+      await timetableService.getTimetable(params);
 
     setTimetables(
       Array.isArray(response.data)
@@ -46,10 +79,25 @@ export default function TimetablePage() {
     );
   } catch (error) {
     console.log(error);
+    setError(
+      error.response?.data?.message ||
+        "Unable to load timetable"
+    );
   } finally {
     setLoading(false);
   }
 };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+
+    const params = new URLSearchParams();
+    if (date) params.set("date", date);
+    if (time) params.set("time", time);
+    if (busType !== "All") params.set("busType", busType);
+
+    setSearchParams(params);
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
@@ -68,15 +116,52 @@ export default function TimetablePage() {
             </h1>
 
             <p className="mt-2 text-sm text-slate-500">
-              Live bus schedules and delays for today
+              Search live bus schedules by date, time, and bus type
             </p>
           </div>
 
-          {/* Bus Type Filter */}
-          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <span className="text-sm font-semibold text-slate-600">
-              Bus Type:
-            </span>
+          <form
+            onSubmit={handleSearch}
+            className="grid w-full gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:max-w-2xl lg:grid-cols-[1fr_1fr_auto]"
+          >
+            <label className="rounded-xl border border-slate-200 px-3 py-2">
+              <span className="flex items-center gap-2 text-xs font-medium text-slate-500">
+                <CalendarDays className="h-4 w-4" />
+                Date
+              </span>
+              <input
+                type="date"
+                value={toInputDate(date)}
+                onChange={(e) => setDate(toApiDate(e.target.value))}
+                className="mt-1 w-full bg-transparent text-sm outline-none"
+              />
+            </label>
+
+            <label className="rounded-xl border border-slate-200 px-3 py-2">
+              <span className="flex items-center gap-2 text-xs font-medium text-slate-500">
+                <Clock className="h-4 w-4" />
+                Time
+              </span>
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="mt-1 w-full bg-transparent text-sm outline-none"
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            >
+              <Search className="h-4 w-4" />
+              Search
+            </button>
+
+            <div className="flex flex-wrap items-center gap-3 lg:col-span-3">
+              <span className="text-sm font-semibold text-slate-600">
+                Bus Type:
+              </span>
 
             {["CTB", "Private", "All"].map(
               (type) => (
@@ -99,8 +184,15 @@ export default function TimetablePage() {
                 </label>
               )
             )}
-          </div>
+            </div>
+          </form>
         </div>
+
+        {error && (
+          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
 
         {/* Timetable Table */}
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl">

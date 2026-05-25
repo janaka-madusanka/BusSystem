@@ -45,13 +45,16 @@ function ConductorTimetablePage() {
     const load = async () => {
       try {
         const data = await timetableService.getMyBusTimetable();
+        const timetable = data?.data?.timetable || data?.timetable || null;
+        const bus = data?.data?.bus || data?.bus || null;
 
-        if (data) {
+        if (timetable) {
           setForm((prev) => ({
             ...prev,
-            bus: data.bus || prev.bus,
-            date: data.date || "",
-            trips: data.trips || [],
+            bus: bus?._id || timetable.bus?._id || prev.bus,
+            busInfo: bus || timetable.bus || prev.busInfo,
+            date: timetable.date || data?.data?.date || "",
+            trips: timetable.trips || [],
           }));
         }
       } catch (err) {
@@ -145,9 +148,9 @@ function ConductorTimetablePage() {
         {form.busInfo ? (
           <div>
             <p className="text-lg font-bold">{form.busInfo.busNumber}</p>
-            <p className="text-sm text-gray-600">{form.busInfo.name}</p>
+            <p className="text-sm text-gray-600">{form.busInfo.busType}</p>
             <p className="text-sm">
-              {form.busInfo.origin} → {form.busInfo.destination}
+              {form.busInfo.route?.origin} → {form.busInfo.route?.destination}
             </p>
           </div>
         ) : (
