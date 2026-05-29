@@ -38,7 +38,9 @@ export default function BusDetailsPage() {
     }
   };
 
+  
   if (!busData) {
+    
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="text-center">
@@ -112,49 +114,101 @@ export default function BusDetailsPage() {
           </div>
 
           {/* Route Progress */}
-          <div className="mt-12">
-            <h2 className="mb-6 text-xl font-bold text-slate-800">
-              Route Progress
-            </h2>
+          {/* Route Progress */}
+<div className="mt-12">
+  <h2 className="mb-8 text-xl font-bold text-slate-800">
+    Route Progress
+  </h2>
 
-            <div className="relative flex items-center justify-between">
-              {/* Line */}
-              <div className="absolute left-0 right-0 top-3 h-1 rounded-full bg-slate-200" />
+  {(() => {
+    const stops = [
+      "Kuliyapitiya",
+      "Natthandiya",
+      "Negombo",
+      "Ja-Ela",
+      "Wattala",
+      "Colombo",
+    ];
 
-              {/* Active Line */}
-              <div className="absolute left-0 top-3 h-1 w-1/2 rounded-full bg-emerald-500" />
+    // Current active stop
+    const currentStop = "Negombo";
 
-              {[
-                busData.bus?.route?.origin,
-                "Kurunegala",
-                "Negombo",
-                busData.bus?.route?.destination,
-              ].map((stop, index) => (
+    const activeIndex = stops.indexOf(currentStop);
+
+    return (
+      <div className="relative px-2">
+        {/* Background Line */}
+        <div className="absolute top-5 left-0 right-0 h-[4px] bg-slate-200 rounded-full" />
+
+        {/* Active Line */}
+        <div
+          className="absolute top-5 left-0 h-[4px] bg-emerald-500 rounded-full transition-all duration-500"
+          style={{
+            width: `${(activeIndex / (stops.length - 1)) * 100}%`,
+          }}
+        />
+
+        {/* Stops */}
+        <div className="relative flex justify-between">
+          {stops.map((stop, index) => {
+            const isCompleted = index < activeIndex;
+            const isCurrent = index === activeIndex;
+
+            return (
+              <div
+                key={index}
+                className="flex flex-col items-center"
+              >
+                {/* Circle */}
                 <div
-                  key={index}
-                  className="relative z-10 flex flex-col items-center"
+                  className={`
+                    z-10 flex h-10 w-10 items-center justify-center rounded-full border-4 bg-white transition-all duration-300
+                    ${
+                      isCompleted
+                        ? "border-emerald-500"
+                        : isCurrent
+                        ? "border-orange-400"
+                        : "border-slate-300"
+                    }
+                  `}
                 >
                   <div
-                    className={`h-6 w-6 rounded-full border-4 ${
-                      index <= 1
-                        ? "border-emerald-500 bg-emerald-500"
-                        : "border-slate-300 bg-white"
-                    }`}
+                    className={`
+                      h-5 w-5 rounded-full
+                      ${
+                        isCompleted
+                          ? "bg-emerald-500"
+                          : isCurrent
+                          ? "bg-orange-400"
+                          : "bg-white"
+                      }
+                    `}
                   />
-
-                  <p
-                    className={`mt-3 text-xs font-medium ${
-                      index === 1
-                        ? "text-emerald-600"
-                        : "text-slate-500"
-                    }`}
-                  >
-                    {stop}
-                  </p>
                 </div>
-              ))}
-            </div>
-          </div>
+
+                {/* Label */}
+                <p
+                  className={`
+                    mt-3 text-sm font-semibold
+                    ${
+                      isCompleted
+                        ? "text-emerald-600"
+                        : isCurrent
+                        ? "text-orange-500"
+                        : "text-slate-500"
+                    }
+                  `}
+                >
+                  {stop}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  })()}
+</div>
 
           {/* Stats */}
           <div className="mt-12 grid gap-5 sm:grid-cols-3">
